@@ -31,7 +31,7 @@ async def start(event):
     if event.is_group:
         await event.reply("**Bin-Checker is Alive**")
         return
-    await event.reply(f"**Heya {event.sender.first_name}\nIts a Bin-Checker Bot To Check Your Bins Are Valid Or Not.", buttons=[
+    await event.reply(f"**Heya {event.sender.first_name}**\nIts a Bin-Checker Bot To Check Your Bins Are Valid Or Not.", buttons=[
     [Button.url("Mʏ Sᴏᴜʀᴄᴇ Cᴏᴅᴇ", "https://github.com/TgxBotz/Bin-Checker")]
     ])
 
