@@ -6,25 +6,28 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
+API_ID = os.environ.get("API_ID", 6)
+API_HASH = os.environ.get("API_HASH", None)
+TOKEN = os.environ.get("TOKEN", None)
+if not API_ID.isdigit():
+    print("API_ID - Should be Integer. Exiting Bot.")
+    exit()
+
 try:
-    API_ID = int(os.environ.get("API_ID", 6))
-    API_HASH = os.environ.get("API_HASH", None)
-    TOKEN = os.environ.get("TOKEN", None)
-except ValueError:
-    print("You forgot to fullfill vars")
-    print("Bot is quitting....")
-    exit()
-except Exception as e:
-    print(f"Error - {str(e)}")
-    print("Bot is quitting.....")
-    exit()
+    bot = TelegramClient('bin', API_ID, API_HASH)
+    bin = bot.start(bot_token=TOKEN)
 except ApiIdInvalidError:
     print("Your API_ID or API_HASH is Invalid.")
     print("Bot is quitting.")
     exit()
+except Exception as e:
+    print(f"Error : {str(e)}")
+    print("Bot is Exiting..")
+    exit()
 
-bot = TelegramClient('bin', API_ID, API_HASH)
-bin = bot.start(bot_token=TOKEN)
+async def add_me():
+    bin.me = await bin.get_me()
+    
 
 @bin.on(events.NewMessage(pattern="^[!?/]start$"))
 async def start(event):
@@ -46,22 +49,22 @@ async def help(event):
 """
     await event.reply(text, buttons=[[Button.url("Mʏ Sᴏᴜʀᴄᴇ Cᴏᴅᴇ", "https://github.com/TgxBotz/Bin-Checker")]])
 
-@bin.on(events.NewMessage(pattern="^[!?/]bin"))
+@bin.on(events.NewMessage(pattern="^[!?/]bin (.*?)"))
 async def binc(event):
     xx = await event.reply("`Processing.....`")
-    try:
-        input = event.text.split(" ", maxsplit=1)[1]
-
-        url = requests.get(f"https://bins-su-api.now.sh/api/{input}")
-        res = url.json()
-        vendor = res['data']['vendor']
-        type = res['data']['type']
-        level = res['data']['level']
-        bank = res['data']['bank']
-        country = res['data']['country']
-        me = (await event.client.get_me()).username
-
-        valid = f"""
+    input = event.pattern_match.group(1)
+    url = requests.get(f"https://bins-su-api.now.sh/api/{input}")
+    res = url.json()
+    me = bin.me.username
+    r = res.get("data")
+    if not r:
+        return await xx.edit(f"**➤ Invalid Bin:**\n\n**Bin -** `{input}`\n**Status -** `Invalid Bin`\n\n**Checked By -** @{me}\n**User-ID - {event.sender_id}**")
+    vendor = r.get('vendor')
+    type = r.get('type')
+    level = r.get('level')
+    bank = r.get('bank')
+    country = r.get('country')
+    valid = f"""
 <b>➤ Valid Bin:</b>
 
 <b>Bin -</b> <code>{input}</code>
@@ -75,12 +78,9 @@ async def binc(event):
 <b>Checked By - @{me}</b>
 <b>User-ID - {event.sender_id}</b>
 """
-        await xx.edit(valid, parse_mode="HTML")
-    except IndexError:
-       await xx.edit("Plese provide a bin to check\n__`/bin yourbin`__")
-    except KeyError:
-        me = (await event.client.get_me()).username
-        await xx.edit(f"**➤ Invalid Bin:**\n\n**Bin -** `{input}`\n**Status -** `Invalid Bin`\n\n**Checked By -** @{me}\n**User-ID - {event.sender_id}**")
-
-print ("Successfully Started")
-bin.run_until_disconnected()
+    await xx.edit(valid, parse_mode="HTML")
+            
+if __name__ == "__main__":
+    print("Successfully Started")
+    bin.loop.run_until_complete(add_me())
+    bin.run_until_disconnected()
